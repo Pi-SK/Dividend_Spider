@@ -23,7 +23,7 @@
 1. 克隆项目到本地
 
    ```
-   git clone https://github.com/your-username/Dividend_Spider.git
+   git clone https://github.com/Pi-SK/Dividend_Spider
    ```
 2. 创建虚拟环境并激活
 
