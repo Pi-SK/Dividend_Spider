@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>东方财富网股票分红信息爬虫</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'dividend_data/style.css' %}"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="login">
+      <div class="login_form">
+        <h1>运行爬虫</h1>
+        <form action="{% url 'dividend_data:run_crawler' %}" method="post">
+          {% csrf_token %}
+          <label for="start_date">起始时间</label>
+          <input
+            type="text"
+            id="start_date"
+            name="start_date"
+            placeholder="格式：2024-01-01"
+          />
+          <label for="end_date">截止时间</label>
+          <input
+            type="text"
+            id="end_date"
+            name="end_date"
+            placeholder="格式：2024-01-01"
+          />
+          <label for="only_yearly">仅爬取年报</label>
+          <select id="only_yearly" name="only_yearly">
+            <option value="True" selected>是</option>
+            <option value="False">否</option>
+          </select>
+          <input
+            type="submit"
+            value="运行"
+            style="font-size: 1rem; margin-top: 1rem"
+          />
+          <a id='backLink'>取消</a>
+        </form>
+      </div>
+      <!-- 加载动画 -->
+      <div class="overlay" id="overlay">
+        <div class="loader" id="loader"></div>
+      </div>
+    </div>
+
+    <div class="header">
+      <h1>东方财富网股票分红信息爬虫</h1>
+    </div>
+    <div class="main">
+      <div class="side-bar">
+        <h2>功能选项</h2>
+        <a href="#">爬取数据</a>
+        <a href="#">爬取结果</a>
+      </div>
+      <div class="content">
+        <h1>爬取结果</h1>
+        <div class="options"></div>
+        <div class="form-content">
+          <table>
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>股票代码</th>
+                <th>公司名称</th>
+                <th>分红年份</th>
+                <th>公告日期</th>
+                <th>送股比例</th>
+                <th>转股比例</th>
+                <th>现金分红比例</th>
+                <th>股息率</th>
+                <th>每股收益</th>
+                <th>每股净资产</th>
+                <th>每股公积金</th>
+                <th>每股未分配利润</th>
+                <th>净利润增长率</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 监听表单提交事件
+      document
+        .querySelector("form")
+        .addEventListener("submit", function (event) {
+          // 显示加载动画和遮罩层
+          document.getElementById("overlay").style.display = "block";
+          document.getElementById("loader").style.display = "block";
+        });
+    </script>
+    <script>
+      // 当文档加载完毕后，为返回链接添加点击事件
+      document.addEventListener('DOMContentLoaded', function() {
+          var backLink = document.getElementById('backLink');
+          backLink.addEventListener('click', function() {
+              // 调用history.back()方法来返回到前一个页面
+              window.history.back();
+          });
+      });
+      </script>
+  </body>
+</html>

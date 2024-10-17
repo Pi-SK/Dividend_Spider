@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'dividend_data/style.css' %}"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <title>{{ stock_code }}-{{ company_name }}</title>
+    <!-- 引入Chart.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <div class="login">
+      <div
+        class="login_form"
+        style="
+          width: auto;
+          height: auto;
+          display: flex;
+        "
+      >
+        <h1>{{ stock_code }}-{{ company_name }} 历年分红数据</h1>
+        <div style="width: 70vw;">
+          <canvas id="dividendChart"></canvas>
+        </div>
+        <a id='backLink' style='margin-top: 20px;'>返回</a>
+      </div>
+    </div>
+
+    <div class="header">
+      <h1>东方财富网股票分红信息爬虫</h1>
+    </div>
+    <div class="main">
+      <div class="side-bar">
+        <h2>功能选项</h2>
+        <a href="#">爬取数据</a>
+        <a href="#">爬取结果</a>
+      </div>
+      <div class="content">
+        <h1>爬取结果</h1>
+        <div class="options"></div>
+        <div class="form-content">
+          <table>
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>股票代码</th>
+                <th>公司名称</th>
+                <th>分红年份</th>
+                <th>公告日期</th>
+                <th>送股比例</th>
+                <th>转股比例</th>
+                <th>现金分红比例</th>
+                <th>股息率</th>
+                <th>每股收益</th>
+                <th>每股净资产</th>
+                <th>每股公积金</th>
+                <th>每股未分配利润</th>
+                <th>净利润增长率</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 折线图配置和初始化脚本 -->
+    <script>
+          // 从上下文获取数据
+          var stock_code = {{ stock_code|safe }};
+          var years = {{ years|safe }};
+          var chart_data = {{ chart_data|safe }}
+
+          // 初始化折线图
+          document.addEventListener('DOMContentLoaded', function() {
+          var ctx = document.getElementById('dividendChart').getContext('2d');
+          var dividendChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                  labels: years,
+                  datasets: [
+                  {
+                      label: '现金分红比例',
+                      data: chart_data.cash_dividend_ratio,
+                      borderColor: '#45DAD1',
+                      fill: false
+                  },
+                  {
+                      label: '股息率',
+                      data: chart_data.dividend_yield,
+                      borderColor: '#FFA940',
+                      fill: false
+                  },
+                  {
+                      label: '每股收益',
+                      data: chart_data.earnings_per_share,
+                      borderColor: '#73D13D',
+                      fill: false
+                  },
+                  {
+                      label: '每股净资产',
+                      data: chart_data.net_asset_per_share,
+                      borderColor: '#40A9FF',
+                      fill: false
+                  },
+                  {
+                      label: '每股公积金',
+                      data: chart_data.reserve_per_shares,
+                      borderColor: '#9F69E2',
+                      fill: false
+                  },
+                  {
+                      label: '每股未分配利润',
+                      data: chart_data.undistributed_profit_per_share,
+                      borderColor: '#8BA2FF',
+                      fill: false
+                  },
+                  {
+                      label: '每股经营现金流',
+                      data: chart_data.net_profit_growth_rate,
+                      borderColor: '#FFD666',
+                      fill: false
+                  },
+              ]
+              },
+              options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: '历年分红数据',
+                    fontSize: 24,
+                    fontColor: '#333'
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        fontColor: '#333',
+                        fontSize: 14
+                    }
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                    titleFontSize: 14,
+                    titleFontColor: '#000',
+                    bodyFontColor: '#000',
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    bodyFontSize: 12,
+                    displayColors: false,
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: '年份',
+                            fontSize: 16,
+                            fontColor: '#666'
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: '数值',
+                            fontSize: 16,
+                            fontColor: '#666'
+                        },
+                        gridLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            beginAtZero: true,
+                            fontSize: 12,
+                            fontColor: '#666'
+                        }
+                    }]
+                }
+            }
+          });
+      });
+    </script>
+    <script>
+      // 当文档加载完毕后，为返回链接添加点击事件
+      document.addEventListener('DOMContentLoaded', function() {
+          var backLink = document.getElementById('backLink');
+          backLink.addEventListener('click', function() {
+              // 调用history.back()方法来返回到前一个页面
+              window.history.back();
+          });
+      });
+      </script>
+  </body>
+</html>

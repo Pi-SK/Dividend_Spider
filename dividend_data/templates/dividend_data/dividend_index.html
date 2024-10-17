@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+  {% load static %}
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>东方财富网股票分红信息爬虫</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'dividend_data/style.css' %}"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="header">
+      <h1>东方财富网股票分红信息爬虫</h1>
+    </div>
+    <div class="main">
+      <div class="side-bar">
+        <h2>功能选项</h2>
+        <a href="{% url 'dividend_data:crawler' %}">爬取数据</a>
+        <a href="{% url 'dividend_data:eastmoney' %}">结果表单</a>
+        <a href="{% url 'dividend_data:csv' %}">导出结果</a>
+        <a href="{% url 'dividend_data:to_delete_all' %}">清空结果</a>
+      </div>
+      <div class="content">
+        <h2>结果表单</h2>
+        <div class="scrollable-content">
+          <div id="options-id" class="options">
+            <form method="get">
+              <label>股票代码:</label>
+              {{ form.stock_code }}
+              <label style="margin-left: 1rem">公司名称:</label>
+              {{ form.company_name }}
+              <label style="margin-left: 1rem">公告日期:</label>
+              {{ form.announcement_year_start }} - {{ form.announcement_year_end}}
+              <label style="margin-left: 1rem">清洗缺省值:</label>
+              {{ form.default_values }}
+              <button type="submit">筛选</button>
+            </form>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>股票代码</th>
+                <th>公司名称</th>
+                <th>分红年份</th>
+                <th>公告日期</th>
+                <th>送转股总比例</th>
+                <th>送股比例</th>
+                <th>转股比例</th>
+                <th>现金分红比例</th>
+                <th>股息率</th>
+                <th>每股收益</th>
+                <th>每股净资产</th>
+                <th>每股公积金</th>
+                <th>每股未分配利润</th>
+                <th>净利润增长率</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dividend in dividends %}
+              <tr>
+                <td>{{ dividend.series_num }}</td>
+                <td>{{ dividend.stock_code }}</td>
+                <td>{{ dividend.company_name }}</td>
+                <td>{{ dividend.dividend_year }}</td>
+                <td>{{ dividend.announcement_date }}</td>
+                <td>{{ dividend.total_stock_bonus_ratio }}</td>
+                <td>{{ dividend.bonus_stock_ratio }}</td>
+                <td>{{ dividend.convert_stock_ratio }}</td>
+                <td>{{ dividend.cash_dividend_ratio }}</td>
+                <td>{{ dividend.dividend_yield }}</td>
+                <td>{{ dividend.earnings_per_share }}</td>
+                <td>{{ dividend.net_asset_per_share }}</td>
+                <td>{{ dividend.reserve_per_share }}</td>
+                <td>{{ dividend.undistributed_profit_per_share }}</td>
+                <td>{{ dividend.net_profit_growth_rate }}</td>
+                <td>
+                  <a href="{% url 'dividend_data:dividend_charts' stock_code=dividend.stock_code %}" style="color: #3f72af">查看图表</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="15">没有查询结果，或筛选组合错误</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="button">
+            <span
+              >总共 {{ paginator.count }} 条记录 | 第 {{ page_obj.number }} 页 |
+              共 {{ paginator.num_pages }} 页</span
+            >
+
+            {% if page_obj.has_previous %}
+            <a
+              href="?page={{ page_obj.previous_page_number }}{% if form.is_bound %}&{{ form.query_string }}{% endif %}"
+              >上一页</a
+            >
+            {% else %}
+            <a href="#" class="disabled">上一页</a>
+            {% endif %}
+
+            <!-- 转到__页的输入框和按钮 -->
+            <form class="goto-page-form" method="get" action="">
+              <input
+                type="text"
+                name="page"
+                size="2"
+                value="{{ page_obj.number }}"
+              />
+              <input type="hidden" name="order_by" value="{{ request.GET.order_by|default_if_none:"" }}" />
+              <input type="submit" value="转到" />
+              {% if form.is_bound %} 
+              {% for field in form %}
+              <input
+                type="hidden"
+                name="{{ field.html_name }}"
+                value="{{ field.value }}"
+              />
+              {% endfor %} 
+              {% endif %}
+            </form>
+
+            <!-- 跳转到最后一页的链接 -->
+            <a
+              href="?page={{ paginator.num_pages }}{% if form.is_bound %}&{{ form.query_string }}{% endif %}"
+              >最后一页</a
+            >
+
+            {% if page_obj.has_next %}
+            <a
+              href="?page={{ page_obj.next_page_number }}{% if form.is_bound %}&{{ form.query_string }}{% endif %}"
+              >下一页</a
+            >
+            {% else %}
+            <a href="#" class="disabled">下一页</a>
+            {% endif %}
+          </div>
+          <a id="export-btn" class="export" href="#">导出筛选结果为CSV</a>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        // 初始化Select2
+        $(".select2").select2();
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var element = document.getElementById("options-id");
+        var style = window.getComputedStyle(element);
+        var height = style.height; 
+        var numericHeight = parseFloat(height);
+        // 获取所有符合条件的表格元素
+        var tables = document.querySelectorAll(".scrollable-content table");
+        // 遍历这些表格并设置它们的 top 值
+        tables.forEach(function (table) {
+          table.style.top = numericHeight - 30 + "px"; 
+        });
+      });
+    </script>
+    <script>
+      // ============================在前端实现筛选后表单导出==============================
+
+      document.addEventListener("DOMContentLoaded", function (event) {
+        // 绑定导出按钮点击事件
+        document
+          .getElementById("export-btn")
+          .addEventListener("click", function () {
+            event.preventDefault();
+            exportAllPagesToCSV();
+          });
+      });
+
+      function exportAllPagesToCSV() {
+        var currentPage = parseInt(
+          document.querySelector(".button span").innerText.match(/\d+/g)[1]
+        );
+        var totalPages = parseInt(
+          document.querySelector(".button span").innerText.match(/\d+/g)[2]
+        );
+        var csvContent = "\ufeff";
+        var headers = [];
+
+        // 递归函数，用于遍历所有分页并收集数据
+        function processPage(pageNumber) {
+          // 构建分页URL
+          var url = new URL(window.location.href);
+          url.searchParams.set("page", pageNumber);
+
+          // 发起请求获取当前页的数据
+          fetch(url.toString())
+            .then((response) => response.text())
+            .then((data) => {
+              var parser = new DOMParser();
+              var doc = parser.parseFromString(data, "text/html");
+              var rows = doc.querySelectorAll("table tr");
+
+              // 获取表头
+              if (pageNumber === 1) {
+                var tableHeaders = rows[0].querySelectorAll("th");
+                headers = Array.from(tableHeaders)
+                  .slice(0, -1)
+                  .map((th) => th.innerText);
+                csvContent += headers.join(",") + "\r\n";
+              }
+
+              // 获取并处理表体数据
+              for (var i = 1; i < rows.length; i++) {
+                var cols = rows[i].querySelectorAll("td");
+                var rowData = Array.from(cols)
+                  .slice(0, -1)
+                  .map((td) => td.innerText.replace(/,/g, ""));
+                csvContent += rowData.join(",") + "\r\n";
+              }
+
+              // 如果不是最后一页，递归处理下一页
+              if (pageNumber < totalPages) {
+                processPage(pageNumber + 1);
+              } else {
+                // 所有页面处理完毕，导出CSV
+                downloadCSV(csvContent, "filtered_form.csv");
+              }
+            })
+            .catch((error) => console.error("Error fetching page:", error));
+        }
+
+        // 从第一页开始处理
+        processPage(1);
+      }
+
+      function downloadCSV(csvContent, filename) {
+        var encodedUri =
+          "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link); // Required for FF
+        link.click();
+        document.body.removeChild(link);
+      }
+    </script>
+  </body>
+</html>
