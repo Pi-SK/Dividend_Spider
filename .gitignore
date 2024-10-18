@@ -167,4 +167,5 @@ crawled_json_data/
 dividend_data/migrations/*
 !dividend_data/migrations/
 !dividend_data/migrations/__init__.py
+!dividend_data/static/
 
